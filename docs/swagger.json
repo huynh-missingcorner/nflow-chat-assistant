@@ -50,6 +50,201 @@
           "tags": ["Chat"]
         }
       },
+      "/chat-messages": {
+        "post": {
+          "operationId": "ChatMessageController_create",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateMessageDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "The chat message has been successfully created.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/MessageResponseDto"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid request parameters."
+            }
+          },
+          "summary": "Create a new chat message",
+          "tags": ["Chat Messages"]
+        },
+        "get": {
+          "operationId": "ChatMessageController_findAll",
+          "parameters": [
+            {
+              "name": "sessionId",
+              "required": false,
+              "in": "query",
+              "description": "Filter messages by session ID",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "List of chat messages.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/MessageResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "summary": "Get all chat messages or filter by session ID",
+          "tags": ["Chat Messages"]
+        }
+      },
+      "/chat-messages/{id}": {
+        "get": {
+          "operationId": "ChatMessageController_findOne",
+          "parameters": [
+            {
+              "name": "id",
+              "required": true,
+              "in": "path",
+              "description": "The ID of the chat message",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "The chat message has been found.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/MessageResponseDto"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Chat message not found."
+            }
+          },
+          "summary": "Get a chat message by ID",
+          "tags": ["Chat Messages"]
+        },
+        "patch": {
+          "operationId": "ChatMessageController_update",
+          "parameters": [
+            {
+              "name": "id",
+              "required": true,
+              "in": "path",
+              "description": "The ID of the chat message",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateMessageDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "The chat message has been successfully updated.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/MessageResponseDto"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid request parameters."
+            },
+            "404": {
+              "description": "Chat message not found."
+            }
+          },
+          "summary": "Update a chat message",
+          "tags": ["Chat Messages"]
+        },
+        "delete": {
+          "operationId": "ChatMessageController_remove",
+          "parameters": [
+            {
+              "name": "id",
+              "required": true,
+              "in": "path",
+              "description": "The ID of the chat message",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "The chat message has been successfully deleted.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/DeleteMessageResponseDto"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Chat message not found."
+            }
+          },
+          "summary": "Delete a chat message",
+          "tags": ["Chat Messages"]
+        }
+      },
+      "/chat-messages/session/{sessionId}": {
+        "delete": {
+          "operationId": "ChatMessageController_removeAllBySession",
+          "parameters": [
+            {
+              "name": "sessionId",
+              "required": true,
+              "in": "path",
+              "description": "The ID of the chat session",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "The chat messages have been successfully deleted."
+            }
+          },
+          "summary": "Delete all messages for a chat session",
+          "tags": ["Chat Messages"]
+        }
+      },
       "/chat-sessions": {
         "post": {
           "operationId": "ChatSessionController_create",
@@ -223,6 +418,102 @@
             }
           },
           "required": ["sessionId", "reply"]
+        },
+        "CreateMessageDto": {
+          "type": "object",
+          "properties": {
+            "sessionId": {
+              "type": "string",
+              "description": "The unique identifier of the chat session",
+              "example": "123e4567-e89b-12d3-a456-426614174000"
+            },
+            "content": {
+              "type": "string",
+              "description": "The content of the message",
+              "example": "Can you build me a CRM app?"
+            },
+            "role": {
+              "type": "string",
+              "description": "The role of the message sender",
+              "enum": ["USER", "ASSISTANT", "SYSTEM"],
+              "example": "USER",
+              "default": "USER"
+            }
+          },
+          "required": ["sessionId", "content", "role"]
+        },
+        "MessageResponseDto": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The unique identifier of the message",
+              "example": "123e4567-e89b-12d3-a456-426614174000"
+            },
+            "sessionId": {
+              "type": "string",
+              "description": "The unique identifier of the chat session",
+              "example": "123e4567-e89b-12d3-a456-426614174000"
+            },
+            "content": {
+              "type": "string",
+              "description": "The content of the message",
+              "example": "Can you build me a CRM app?"
+            },
+            "role": {
+              "type": "string",
+              "description": "The role of the message sender",
+              "enum": ["USER", "ASSISTANT", "SYSTEM"],
+              "example": "USER"
+            },
+            "createdAt": {
+              "format": "date-time",
+              "type": "string",
+              "description": "The timestamp when the message was created",
+              "example": "2023-04-08T12:34:56.789Z"
+            },
+            "updatedAt": {
+              "format": "date-time",
+              "type": "string",
+              "description": "The timestamp when the message was last updated",
+              "example": "2023-04-08T12:34:56.789Z"
+            }
+          },
+          "required": [
+            "id",
+            "sessionId",
+            "content",
+            "role",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "UpdateMessageDto": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "string",
+              "description": "The content of the message",
+              "example": "Can you build me a CRM app with user authentication?"
+            }
+          },
+          "required": ["content"]
+        },
+        "DeleteMessageResponseDto": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "description": "Whether the message was successfully deleted",
+              "example": true
+            },
+            "message": {
+              "type": "string",
+              "description": "The message returned from the operation",
+              "example": "Message deleted successfully"
+            }
+          },
+          "required": ["success", "message"]
         },
         "CreateChatSessionDto": {
           "type": "object",
