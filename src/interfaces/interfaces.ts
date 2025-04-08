@@ -1,5 +1,5 @@
-export interface message{
-    content:string;
-    role:string;
-    id:string;
+export interface Message {
+  content: string;
+  role: string;
+  id: string;
 }
