@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { ChatSidebar } from "@/components/custom/chat-sidebar";
 import { ChatWindow } from "@/components/custom/chat-window";
+import { PreviewWindow } from "@/components/custom/preview-window";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
 // Mock data - Replace with real data from your backend
@@ -19,6 +20,7 @@ const mockUser = {
 
 export function Chat() {
   const [activeSessionId, setActiveSessionId] = useState<string>("1");
+  const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
 
   const { messages, isLoading, sendMessage } = useWebSocket({
     url: "ws://localhost:8090",
@@ -44,6 +46,10 @@ export function Chat() {
     console.log("Open settings");
   };
 
+  const togglePreview = () => {
+    setIsPreviewOpen((prev) => !prev);
+  };
+
   return (
     <SidebarProvider defaultOpen>
       <div className="flex h-dvh w-full">
@@ -56,11 +62,16 @@ export function Chat() {
           onSignOut={handleSignOut}
           onSettings={handleSettings}
         />
-        <ChatWindow
-          messages={messages}
-          isLoading={isLoading}
-          onSendMessage={sendMessage}
-        />
+        <div className="flex flex-1">
+          <ChatWindow
+            messages={messages}
+            isLoading={isLoading}
+            onSendMessage={sendMessage}
+            onTogglePreview={togglePreview}
+            isPreviewOpen={isPreviewOpen}
+          />
+          {isPreviewOpen && <PreviewWindow onClose={togglePreview} />}
+        </div>
       </div>
     </SidebarProvider>
   );

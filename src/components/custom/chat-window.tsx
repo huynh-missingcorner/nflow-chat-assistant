@@ -10,12 +10,16 @@ interface ChatWindowProps {
   messages: Message[];
   isLoading: boolean;
   onSendMessage: (text: string) => Promise<void>;
+  onTogglePreview?: () => void;
+  isPreviewOpen?: boolean;
 }
 
 export function ChatWindow({
   messages,
   isLoading,
   onSendMessage,
+  onTogglePreview,
+  isPreviewOpen,
 }: ChatWindowProps) {
   const [messagesContainerRef, messagesEndRef] =
     useScrollToBottom<HTMLDivElement>();
@@ -29,7 +33,7 @@ export function ChatWindow({
 
   return (
     <div className="flex flex-1 flex-col bg-background">
-      <Header />
+      <Header onTogglePreview={onTogglePreview} isPreviewOpen={isPreviewOpen} />
       <div
         className="flex flex-col min-w-0 gap-6 flex-1 overflow-y-scroll pt-4"
         ref={messagesContainerRef}
