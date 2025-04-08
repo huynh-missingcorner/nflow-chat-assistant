@@ -1,0 +1,257 @@
+{
+  "swaggerDoc": {
+    "openapi": "3.0.0",
+    "paths": {
+      "/": {
+        "get": {
+          "operationId": "AppController_getHello",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": ""
+            }
+          },
+          "tags": ["App"]
+        }
+      },
+      "/chat": {
+        "post": {
+          "operationId": "ChatController_processMessage",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatRequestDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "The message was successfully processed",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ChatResponseDto"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid request parameters"
+            },
+            "500": {
+              "description": "Internal server error"
+            }
+          },
+          "summary": "Process a user message through the AI assistant",
+          "tags": ["Chat"]
+        }
+      },
+      "/chat-sessions": {
+        "post": {
+          "operationId": "ChatSessionController_create",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateChatSessionDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "The chat session has been successfully created."
+            },
+            "400": {
+              "description": "Invalid request parameters."
+            }
+          },
+          "summary": "Create a new chat session",
+          "tags": ["Chat Sessions"]
+        },
+        "get": {
+          "operationId": "ChatSessionController_findAll",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": "List of all chat sessions."
+            }
+          },
+          "summary": "Get all chat sessions",
+          "tags": ["Chat Sessions"]
+        }
+      },
+      "/chat-sessions/{id}": {
+        "get": {
+          "operationId": "ChatSessionController_findOne",
+          "parameters": [
+            {
+              "name": "id",
+              "required": true,
+              "in": "path",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "The chat session has been found."
+            },
+            "404": {
+              "description": "Chat session not found."
+            }
+          },
+          "summary": "Get a chat session by ID",
+          "tags": ["Chat Sessions"]
+        },
+        "patch": {
+          "operationId": "ChatSessionController_update",
+          "parameters": [
+            {
+              "name": "id",
+              "required": true,
+              "in": "path",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateChatSessionDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "The chat session has been successfully updated."
+            },
+            "400": {
+              "description": "Invalid request parameters."
+            },
+            "404": {
+              "description": "Chat session not found."
+            }
+          },
+          "summary": "Update a chat session",
+          "tags": ["Chat Sessions"]
+        },
+        "delete": {
+          "operationId": "ChatSessionController_remove",
+          "parameters": [
+            {
+              "name": "id",
+              "required": true,
+              "in": "path",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "204": {
+              "description": "The chat session has been successfully deleted."
+            },
+            "404": {
+              "description": "Chat session not found."
+            }
+          },
+          "summary": "Delete a chat session",
+          "tags": ["Chat Sessions"]
+        }
+      }
+    },
+    "info": {
+      "title": "Nflow Chat Assistant API",
+      "description": "API for the Nflow Chat Assistant that interprets user prompts and interacts with the Nflow no-code platform",
+      "version": "1.0",
+      "contact": {}
+    },
+    "tags": [
+      {
+        "name": "Chat",
+        "description": ""
+      }
+    ],
+    "servers": [],
+    "components": {
+      "schemas": {
+        "ChatRequestDto": {
+          "type": "object",
+          "properties": {
+            "sessionId": {
+              "type": "string",
+              "description": "Unique identifier for the chat session",
+              "example": "abc123"
+            },
+            "message": {
+              "type": "string",
+              "description": "Message content from the user",
+              "example": "Build a task manager app with login and calendar"
+            }
+          },
+          "required": ["sessionId", "message"]
+        },
+        "ChatResponseDto": {
+          "type": "object",
+          "properties": {
+            "sessionId": {
+              "type": "string",
+              "description": "Unique identifier for the chat session",
+              "example": "abc123"
+            },
+            "reply": {
+              "type": "string",
+              "description": "The reply message from the AI assistant",
+              "example": "Your app is ready! Here's the link to view it in Nflow."
+            },
+            "appUrl": {
+              "type": "string",
+              "description": "URL to the created application in Nflow",
+              "example": "https://nflow.so/app/xyz456"
+            }
+          },
+          "required": ["sessionId", "reply"]
+        },
+        "CreateChatSessionDto": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "Title of the chat session",
+              "example": "Task Manager App Discussion"
+            }
+          },
+          "required": ["title"]
+        },
+        "UpdateChatSessionDto": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "Title of the chat session",
+              "example": "Task Manager App Discussion"
+            },
+            "archived": {
+              "type": "boolean",
+              "description": "Whether the chat session is archived",
+              "example": true
+            }
+          }
+        }
+      }
+    }
+  },
+  "customOptions": {}
+}
