@@ -4,6 +4,7 @@ import { ChatSidebar } from "@/components/custom/chat-sidebar";
 import { ChatWindow } from "@/components/custom/chat-window";
 import { PreviewWindow } from "@/components/custom/preview-window";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { AnimatePresence } from "framer-motion";
 
 // Mock data - Replace with real data from your backend
 const mockSessions = [
@@ -62,7 +63,7 @@ export function Chat() {
           onSignOut={handleSignOut}
           onSettings={handleSettings}
         />
-        <div className="flex flex-1">
+        <div className="flex flex-1 overflow-hidden">
           <ChatWindow
             messages={messages}
             isLoading={isLoading}
@@ -70,7 +71,11 @@ export function Chat() {
             onTogglePreview={togglePreview}
             isPreviewOpen={isPreviewOpen}
           />
-          {isPreviewOpen && <PreviewWindow onClose={togglePreview} />}
+          <AnimatePresence mode="wait">
+            {isPreviewOpen && (
+              <PreviewWindow key="preview-window" onClose={togglePreview} />
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </SidebarProvider>

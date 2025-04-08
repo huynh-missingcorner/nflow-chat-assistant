@@ -43,7 +43,7 @@ export function ChatSidebar({
   return (
     <Sidebar>
       <SidebarHeader className="border-b border-border px-2 py-2 h-14 justify-center">
-        <div className="flex items-center justify-end">
+        <div className="flex items-center justify-start">
           <Button
             variant="ghost"
             size="icon"

@@ -5,6 +5,7 @@ import { Header } from "./header";
 import { useScrollToBottom } from "./use-scroll-to-bottom";
 import { Message } from "@/interfaces/interfaces";
 import { useState } from "react";
+import { motion } from "framer-motion";
 
 interface ChatWindowProps {
   messages: Message[];
@@ -32,7 +33,15 @@ export function ChatWindow({
   };
 
   return (
-    <div className="flex flex-1 flex-col bg-background">
+    <motion.div
+      animate={{ flex: isPreviewOpen ? 1 : 2 }}
+      transition={{
+        type: "spring",
+        stiffness: 300,
+        damping: 30,
+      }}
+      className="flex min-w-0 flex-1 flex-col bg-background"
+    >
       <Header onTogglePreview={onTogglePreview} isPreviewOpen={isPreviewOpen} />
       <div
         className="flex flex-col min-w-0 gap-6 flex-1 overflow-y-scroll pt-4"
@@ -56,6 +65,6 @@ export function ChatWindow({
           isLoading={isLoading}
         />
       </div>
-    </div>
+    </motion.div>
   );
 }
