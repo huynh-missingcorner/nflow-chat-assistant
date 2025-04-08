@@ -6,18 +6,73 @@ import { useScrollToBottom } from "./use-scroll-to-bottom";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useChatContext } from "@/contexts/ChatContext";
+import { Button } from "../ui/button";
+import { Trash, MoreHorizontal } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 export function ChatWindow() {
-  const { messages, isLoading, sendMessage, isPreviewOpen, togglePreview } =
-    useChatContext();
+  const {
+    messages,
+    isLoading,
+    sendMessage,
+    isPreviewOpen,
+    togglePreview,
+    activeSessionId,
+    clearSessionMessages,
+    deleteMessage,
+  } = useChatContext();
+
   const [messagesContainerRef, messagesEndRef] =
     useScrollToBottom<HTMLDivElement>();
   const [question, setQuestion] = useState<string>("");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(
+    null
+  );
+  const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
 
   const handleSubmit = async (text?: string) => {
     const messageText = text || question;
+    if (!messageText.trim()) return;
+
     await sendMessage(messageText);
     setQuestion("");
+  };
+
+  const handleMessageDelete = async (id: string) => {
+    setSelectedMessageId(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteMessage = async () => {
+    if (selectedMessageId) {
+      await deleteMessage(selectedMessageId);
+      setIsDeleteDialogOpen(false);
+      setSelectedMessageId(null);
+    }
+  };
+
+  const handleClearAllMessages = () => {
+    setIsDeleteAllDialogOpen(true);
+  };
+
+  const confirmClearAllMessages = async () => {
+    if (activeSessionId) {
+      await clearSessionMessages(activeSessionId);
+      setIsDeleteAllDialogOpen(false);
+    }
   };
 
   return (
@@ -30,14 +85,41 @@ export function ChatWindow() {
       }}
       className="flex min-w-0 flex-1 flex-col bg-background"
     >
-      <Header onTogglePreview={togglePreview} isPreviewOpen={isPreviewOpen} />
+      <Header
+        onTogglePreview={togglePreview}
+        isPreviewOpen={isPreviewOpen}
+        showClearMessages={messages.length > 0}
+        onClearMessages={handleClearAllMessages}
+      />
       <div
         className="flex flex-col min-w-0 gap-6 flex-1 overflow-y-scroll pt-4"
         ref={messagesContainerRef}
       >
         {messages.length === 0 && <Overview />}
         {messages.map((message, index) => (
-          <PreviewMessage key={index} message={message} />
+          <div key={message.id || index} className="group relative">
+            <PreviewMessage message={message} />
+            {message.role === "user" && (
+              <div className="absolute right-4 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={() => handleMessageDelete(message.id)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash className="mr-2 h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
+          </div>
         ))}
         {isLoading && <ThinkingMessage />}
         <div
@@ -53,6 +135,54 @@ export function ChatWindow() {
           isLoading={isLoading}
         />
       </div>
+
+      {/* Delete Message Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Message</DialogTitle>
+          </DialogHeader>
+          <p className="py-4">Are you sure you want to delete this message?</p>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDeleteMessage}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Clear All Messages Dialog */}
+      <Dialog
+        open={isDeleteAllDialogOpen}
+        onOpenChange={setIsDeleteAllDialogOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Clear All Messages</DialogTitle>
+          </DialogHeader>
+          <p className="py-4">
+            Are you sure you want to clear all messages in this chat? This
+            action cannot be undone.
+          </p>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteAllDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmClearAllMessages}>
+              Clear All
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }

@@ -1,10 +1,14 @@
+import axios from "axios";
 import { ChatRequest, ChatResponse } from "@/types/chat";
+import { API_URL } from "./constants";
 
-const API_URL = "http://localhost:3000";
-
-interface ApiError extends Error {
-  status?: number;
-}
+// Create an axios instance with default config
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
 
 /**
  * Send a message to the chat API
@@ -13,23 +17,19 @@ export async function sendChatMessage(
   request: ChatRequest
 ): Promise<ChatResponse> {
   try {
-    const response = await fetch(`${API_URL}/chat`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(request),
-    });
-
-    if (!response.ok) {
-      const error = new Error("Failed to send message") as ApiError;
-      error.status = response.status;
-      throw error;
-    }
-
-    return await response.json();
+    const response = await api.post("/chat", request);
+    return response.data;
   } catch (error) {
-    console.error("Error sending message:", error);
+    if (axios.isAxiosError(error)) {
+      console.error(
+        "Error sending message:",
+        error.response?.data || error.message
+      );
+      // You can handle specific HTTP status codes here if needed
+      // if (error.response?.status === 400) { ... }
+    } else {
+      console.error("Error sending message:", error);
+    }
     throw error;
   }
 }

@@ -1,34 +1,51 @@
-import { CustomSidebarTrigger } from "./custom-sidebar-trigger";
 import { ThemeToggle } from "./theme-toggle";
 import { Button } from "@/components/ui/button";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Trash } from "lucide-react";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 interface HeaderProps {
   onTogglePreview?: () => void;
   isPreviewOpen?: boolean;
+  showClearMessages?: boolean;
+  onClearMessages?: () => void;
 }
 
-export function Header({ onTogglePreview, isPreviewOpen }: HeaderProps) {
+export function Header({
+  onTogglePreview,
+  isPreviewOpen,
+  showClearMessages,
+  onClearMessages,
+}: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-border bg-background px-4">
       <div className="flex items-center gap-2">
-        <div className="flex items-center space-x-1 sm:space-x-2">
-          <CustomSidebarTrigger />
-        </div>
-        <div className="flex items-center space-x-1 sm:space-x-2">
+        <div className="flex items-center space-x-4">
+          <SidebarTrigger />
           <ThemeToggle />
         </div>
+        <h1 className="font-semibold">Chat</h1>
       </div>
       <div className="flex items-center gap-2">
-        {onTogglePreview && (
+        {showClearMessages && onClearMessages && (
           <Button
             variant="ghost"
             size="icon"
-            onClick={onTogglePreview}
-            className={isPreviewOpen ? "text-primary" : ""}
+            onClick={onClearMessages}
+            className="h-8 w-8"
+            title="Clear all messages"
           >
-            <ExternalLink className="size-4" />
-            <span className="sr-only">Toggle Preview</span>
+            <Trash className="h-4 w-4" />
+          </Button>
+        )}
+        {onTogglePreview && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onTogglePreview}
+            className="h-8 gap-1 text-xs"
+          >
+            {isPreviewOpen ? "Hide Preview" : "Show Preview"}
+            <ExternalLink className="h-3 w-3" />
           </Button>
         )}
       </div>
