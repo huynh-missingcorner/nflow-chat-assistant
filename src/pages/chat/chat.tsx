@@ -23,9 +23,10 @@ export function Chat() {
   const [activeSessionId, setActiveSessionId] = useState<string>("1");
   const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
 
-  const { messages, isLoading, sendMessage } = useWebSocket({
-    url: "http://localhost:3000",
-  });
+  const { messages, isLoading, sendMessage, leaveSession, joinSession } =
+    useWebSocket({
+      url: "http://localhost:3000",
+    });
 
   const handleNewChat = () => {
     // Implement new chat session creation
@@ -34,6 +35,7 @@ export function Chat() {
 
   const handleSessionClick = (sessionId: string) => {
     setActiveSessionId(sessionId);
+    joinSession(sessionId);
     // Load messages for the selected session
   };
 

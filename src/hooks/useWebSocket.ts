@@ -12,6 +12,8 @@ interface UseWebSocketReturn {
   isLoading: boolean;
   sendMessage: (text: string) => Promise<void>;
   isConnected: boolean;
+  joinSession: (sessionId: string) => void;
+  leaveSession: (sessionId: string) => void;
 }
 
 export function useWebSocket({ url }: UseWebSocketProps): UseWebSocketReturn {
@@ -131,10 +133,28 @@ export function useWebSocket({ url }: UseWebSocketProps): UseWebSocketReturn {
     });
   };
 
+  const joinSession = (sessionId: string) => {
+    if (!socketRef.current || !isConnected || isLoading) return;
+
+    socketRef.current.emit("joinSession", {
+      sessionId,
+    });
+  };
+
+  const leaveSession = (sessionId: string) => {
+    if (!socketRef.current || !isConnected || isLoading) return;
+
+    socketRef.current.emit("leaveSession", {
+      sessionId,
+    });
+  };
+
   return {
     messages,
     isLoading,
     sendMessage,
     isConnected,
+    joinSession,
+    leaveSession,
   };
 }
