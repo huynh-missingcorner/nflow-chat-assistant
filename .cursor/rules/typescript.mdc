@@ -1,7 +1,7 @@
 ---
 description: 
-globs: *.tsx,*.ts,*.d.ts
-alwaysApply: false
+globs: 
+alwaysApply: true
 ---
 ---
 description: TypeScript coding standards and best practices for modern web development

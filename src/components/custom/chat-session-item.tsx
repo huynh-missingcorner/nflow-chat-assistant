@@ -20,7 +20,7 @@ export function ChatSessionItem({
       isActive={isActive}
       onClick={onClick}
       tooltip={title}
-      className="w-full justify-start"
+      className="w-full justify-start h-10"
     >
       <MessageSquare className="shrink-0" />
       <span className="flex-1 truncate">{title}</span>
