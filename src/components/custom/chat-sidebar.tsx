@@ -43,7 +43,9 @@ export function ChatSidebar() {
           {sessions.map((session) => (
             <SidebarMenuItem key={session.id}>
               <ChatSessionItem
-                {...session}
+                id={session.id}
+                title={session.title}
+                timestamp={session.timestamp}
                 isActive={session.id === activeSessionId}
                 onClick={() => handleSessionClick(session.id)}
               />

@@ -20,7 +20,7 @@ import { useChatContext } from "@/contexts/ChatContext";
 interface ChatSessionItemProps {
   id: string;
   title: string;
-  timestamp: string;
+  timestamp: string | undefined;
   isActive: boolean;
   onClick: () => void;
 }
