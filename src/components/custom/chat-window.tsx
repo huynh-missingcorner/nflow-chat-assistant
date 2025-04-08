@@ -3,32 +3,20 @@ import { PreviewMessage, ThinkingMessage } from "./message";
 import { Overview } from "./overview";
 import { Header } from "./header";
 import { useScrollToBottom } from "./use-scroll-to-bottom";
-import { Message } from "@/interfaces/interfaces";
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useChatContext } from "@/contexts/ChatContext";
 
-interface ChatWindowProps {
-  messages: Message[];
-  isLoading: boolean;
-  onSendMessage: (text: string) => Promise<void>;
-  onTogglePreview?: () => void;
-  isPreviewOpen?: boolean;
-}
-
-export function ChatWindow({
-  messages,
-  isLoading,
-  onSendMessage,
-  onTogglePreview,
-  isPreviewOpen,
-}: ChatWindowProps) {
+export function ChatWindow() {
+  const { messages, isLoading, sendMessage, isPreviewOpen, togglePreview } =
+    useChatContext();
   const [messagesContainerRef, messagesEndRef] =
     useScrollToBottom<HTMLDivElement>();
   const [question, setQuestion] = useState<string>("");
 
   const handleSubmit = async (text?: string) => {
     const messageText = text || question;
-    await onSendMessage(messageText);
+    await sendMessage(messageText);
     setQuestion("");
   };
 
@@ -42,7 +30,7 @@ export function ChatWindow({
       }}
       className="flex min-w-0 flex-1 flex-col bg-background"
     >
-      <Header onTogglePreview={onTogglePreview} isPreviewOpen={isPreviewOpen} />
+      <Header onTogglePreview={togglePreview} isPreviewOpen={isPreviewOpen} />
       <div
         className="flex flex-col min-w-0 gap-6 flex-1 overflow-y-scroll pt-4"
         ref={messagesContainerRef}

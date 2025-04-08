@@ -5,6 +5,7 @@ import { ArrowUpIcon } from "./icons";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { Pause } from "lucide-react";
 
 interface ChatInputProps {
   question: string;
@@ -79,6 +80,7 @@ export const ChatInput = ({
         )}
         value={question}
         onChange={(e) => setQuestion(e.target.value)}
+        disabled={isLoading}
         onKeyDown={(event) => {
           if (event.key === "Enter" && !event.shiftKey) {
             event.preventDefault();
@@ -100,7 +102,7 @@ export const ChatInput = ({
         onClick={() => onSubmit(question)}
         disabled={question.length === 0}
       >
-        <ArrowUpIcon size={14} />
+        {isLoading ? <Pause size={14} /> : <ArrowUpIcon size={14} />}
       </Button>
     </div>
   );

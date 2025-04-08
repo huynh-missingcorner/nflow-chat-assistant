@@ -34,21 +34,21 @@ export function useWebSocket({ url }: UseWebSocketProps): UseWebSocketReturn {
       // Set up event listeners
       socketRef.current.on("connect", () => {
         setIsConnected(true);
-        addSystemMessage("Connected to server");
       });
 
       socketRef.current.on("disconnect", () => {
         setIsConnected(false);
-        addSystemMessage("Disconnected from server");
+        setIsLoading(false);
         currentSessionId.current = "";
       });
 
       socketRef.current.on("messageReceived", (data) => {
-        addSystemMessage(`Message received (ID: ${data.messageId})`);
+        console.log("WebSocket: messageReceived", data);
       });
 
       socketRef.current.on("messageResponse", (data) => {
         addAssistantMessage(data.message);
+        setIsLoading(false);
       });
 
       socketRef.current.on("messageChunk", (data) => {
@@ -61,13 +61,13 @@ export function useWebSocket({ url }: UseWebSocketProps): UseWebSocketReturn {
       });
 
       socketRef.current.on("sessionJoined", (data) => {
-        addSystemMessage(`Joined session: ${data.sessionId}`);
+        console.log("WebSocket: sessionJoined", data);
         currentSessionId.current = data.sessionId;
         setIsConnected(true);
       });
 
       socketRef.current.on("error", (error) => {
-        addSystemMessage(`Error: ${error.message}`);
+        console.log("WebSocket: error", error);
         console.error("Socket error:", error);
         setIsLoading(false);
       });
@@ -81,11 +81,6 @@ export function useWebSocket({ url }: UseWebSocketProps): UseWebSocketReturn {
       }
     };
   }, [url]);
-
-  // Helper to add system messages
-  const addSystemMessage = (content: string) => {
-    setMessages((prev) => [...prev, { content, role: "system", id: uuidv4() }]);
-  };
 
   // Helper to add assistant messages
   const addAssistantMessage = (content: string) => {

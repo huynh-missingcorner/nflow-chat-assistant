@@ -10,36 +10,19 @@ import {
 import { Plus } from "lucide-react";
 import { ChatSessionItem } from "./chat-session-item";
 import { UserProfile } from "./user-profile";
+import { useChatContext } from "@/contexts/ChatContext";
 
-interface ChatSession {
-  id: string;
-  title: string;
-  timestamp: string;
-}
+export function ChatSidebar() {
+  const {
+    sessions,
+    activeSessionId,
+    user,
+    handleNewChat,
+    handleSessionClick,
+    handleSignOut,
+    handleSettings,
+  } = useChatContext();
 
-interface ChatSidebarProps {
-  sessions: ChatSession[];
-  activeSessionId: string;
-  user: {
-    name: string;
-    email: string;
-    avatarUrl?: string;
-  };
-  onNewChat: () => void;
-  onSessionSelect: (sessionId: string) => void;
-  onSignOut: () => void;
-  onSettings: () => void;
-}
-
-export function ChatSidebar({
-  sessions,
-  activeSessionId,
-  user,
-  onNewChat,
-  onSessionSelect,
-  onSignOut,
-  onSettings,
-}: ChatSidebarProps) {
   return (
     <Sidebar>
       <SidebarHeader className="border-b border-border px-2 py-2 h-14 justify-center">
@@ -48,7 +31,7 @@ export function ChatSidebar({
             variant="ghost"
             size="icon"
             className="h-10 w-auto px-2"
-            onClick={onNewChat}
+            onClick={handleNewChat}
           >
             <Plus className="size-4" />
             <span>New Chat</span>
@@ -62,14 +45,18 @@ export function ChatSidebar({
               <ChatSessionItem
                 {...session}
                 isActive={session.id === activeSessionId}
-                onClick={() => onSessionSelect(session.id)}
+                onClick={() => handleSessionClick(session.id)}
               />
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter className="border-t border-border p-0">
-        <UserProfile {...user} onSignOut={onSignOut} onSettings={onSettings} />
+        <UserProfile
+          {...user}
+          onSignOut={handleSignOut}
+          onSettings={handleSettings}
+        />
       </SidebarFooter>
     </Sidebar>
   );
