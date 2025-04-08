@@ -24,7 +24,7 @@ export function Chat() {
   const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
 
   const { messages, isLoading, sendMessage } = useWebSocket({
-    url: "ws://localhost:8090",
+    url: "http://localhost:3000",
   });
 
   const handleNewChat = () => {

@@ -1,6 +1,7 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Message } from "@/interfaces/interfaces";
 import { v4 as uuidv4 } from "uuid";
+import { io, Socket } from "socket.io-client";
 
 interface UseWebSocketProps {
   url: string;
@@ -10,86 +11,130 @@ interface UseWebSocketReturn {
   messages: Message[];
   isLoading: boolean;
   sendMessage: (text: string) => Promise<void>;
+  isConnected: boolean;
 }
 
 export function useWebSocket({ url }: UseWebSocketProps): UseWebSocketReturn {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const socket = useRef<WebSocket | null>(null);
-  const messageHandlerRef = useRef<((event: MessageEvent) => void) | null>(
-    null
-  );
+  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const socketRef = useRef<Socket | null>(null);
+  const currentSessionId = useRef<string>("");
 
-  // Initialize WebSocket connection
-  if (!socket.current) {
-    socket.current = new WebSocket(url);
-  }
+  // Initialize socket connection
+  useEffect(() => {
+    if (!socketRef.current) {
+      socketRef.current = io(url, {
+        transports: ["websocket"],
+        path: undefined, // Let Socket.IO use default path
+      });
 
-  const cleanupMessageHandler = () => {
-    if (messageHandlerRef.current && socket.current) {
-      socket.current.removeEventListener("message", messageHandlerRef.current);
-      messageHandlerRef.current = null;
+      // Set up event listeners
+      socketRef.current.on("connect", () => {
+        setIsConnected(true);
+        addSystemMessage("Connected to server");
+      });
+
+      socketRef.current.on("disconnect", () => {
+        setIsConnected(false);
+        addSystemMessage("Disconnected from server");
+        currentSessionId.current = "";
+      });
+
+      socketRef.current.on("messageReceived", (data) => {
+        addSystemMessage(`Message received (ID: ${data.messageId})`);
+      });
+
+      socketRef.current.on("messageResponse", (data) => {
+        addAssistantMessage(data.message);
+      });
+
+      socketRef.current.on("messageChunk", (data) => {
+        // For streaming responses
+        appendToLastMessage(data.chunk);
+      });
+
+      socketRef.current.on("messageComplete", () => {
+        setIsLoading(false);
+      });
+
+      socketRef.current.on("sessionJoined", (data) => {
+        addSystemMessage(`Joined session: ${data.sessionId}`);
+        currentSessionId.current = data.sessionId;
+        setIsConnected(true);
+      });
+
+      socketRef.current.on("error", (error) => {
+        addSystemMessage(`Error: ${error.message}`);
+        console.error("Socket error:", error);
+        setIsLoading(false);
+      });
     }
+
+    // Cleanup
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+    };
+  }, [url]);
+
+  // Helper to add system messages
+  const addSystemMessage = (content: string) => {
+    setMessages((prev) => [...prev, { content, role: "system", id: uuidv4() }]);
+  };
+
+  // Helper to add assistant messages
+  const addAssistantMessage = (content: string) => {
+    const messageId = uuidv4();
+    setMessages((prev) => [
+      ...prev,
+      { content, role: "assistant", id: messageId },
+    ]);
+  };
+
+  // Helper to append chunks to the last assistant message
+  const appendToLastMessage = (chunk: string) => {
+    setMessages((prev) => {
+      const lastMessage = prev[prev.length - 1];
+      if (lastMessage?.role === "assistant") {
+        const updatedMessage = {
+          ...lastMessage,
+          content: lastMessage.content + chunk,
+        };
+        return [...prev.slice(0, -1), updatedMessage];
+      } else {
+        // If last message is not from assistant, create a new one
+        return [...prev, { content: chunk, role: "assistant", id: uuidv4() }];
+      }
+    });
   };
 
   const sendMessage = async (text: string) => {
-    if (
-      !socket.current ||
-      socket.current.readyState !== WebSocket.OPEN ||
-      isLoading
-    )
-      return;
+    if (!socketRef.current || !isConnected || isLoading) return;
 
     setIsLoading(true);
-    cleanupMessageHandler();
+    const messageId = uuidv4();
 
-    const traceId = uuidv4();
+    // Add user message to the messages array
     setMessages((prev) => [
       ...prev,
-      { content: text, role: "user", id: traceId },
+      { content: text, role: "user", id: messageId },
     ]);
-    socket.current.send(text);
 
-    try {
-      const messageHandler = (event: MessageEvent) => {
-        setIsLoading(false);
-        if (event.data.includes("[END]")) {
-          return;
-        }
-
-        setMessages((prev) => {
-          const lastMessage = prev[prev.length - 1];
-          const newContent =
-            lastMessage?.role === "assistant"
-              ? lastMessage.content + event.data
-              : event.data;
-
-          const newMessage = {
-            content: newContent,
-            role: "assistant",
-            id: traceId,
-          };
-          return lastMessage?.role === "assistant"
-            ? [...prev.slice(0, -1), newMessage]
-            : [...prev, newMessage];
-        });
-
-        if (event.data.includes("[END]")) {
-          cleanupMessageHandler();
-        }
-      };
-
-      messageHandlerRef.current = messageHandler;
-      socket.current.addEventListener("message", messageHandler);
-    } catch (error) {
-      console.error("WebSocket error:", error);
-      setIsLoading(false);
-    }
+    // Send the message to the server
+    socketRef.current.emit("sendMessage", {
+      message: text,
+      messageId,
+      sessionId: currentSessionId.current,
+    });
   };
 
   return {
     messages,
     isLoading,
     sendMessage,
+    isConnected,
   };
 }
