@@ -3,7 +3,7 @@ import { PreviewMessage, ThinkingMessage } from "./message";
 import { Overview } from "./overview";
 import { Header } from "./header";
 import { useScrollToBottom } from "./use-scroll-to-bottom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "../ui/button";
 import { Trash, MoreHorizontal } from "lucide-react";
@@ -32,9 +32,10 @@ export function ChatWindow() {
     sendMessage,
     deleteMessage,
     clearSessionMessages,
+    detectedUrl,
   } = useMessageStore();
   const { activeSessionId } = useSessionStore();
-  const { isPreviewOpen, togglePreview } = useUIStore();
+  const { isPreviewOpen, togglePreview, setPreviewOpen } = useUIStore();
 
   const [messagesContainerRef, messagesEndRef] =
     useScrollToBottom<HTMLDivElement>();
@@ -44,6 +45,13 @@ export function ChatWindow() {
     null
   );
   const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
+
+  // Auto-open preview when a URL is detected
+  useEffect(() => {
+    if (detectedUrl && !isPreviewOpen) {
+      setPreviewOpen(true);
+    }
+  }, [detectedUrl, isPreviewOpen, setPreviewOpen]);
 
   const isNewChat = messages.length === 0;
 

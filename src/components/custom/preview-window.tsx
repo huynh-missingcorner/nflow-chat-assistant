@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { X } from "lucide-react";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useMessageStore } from "@/stores/useMessageStore";
 
 interface PreviewWindowProps {
   onClose: () => void;
@@ -13,14 +14,39 @@ export function PreviewWindow({
   onClose,
   defaultUrl = "about:blank",
 }: PreviewWindowProps) {
+  const { detectedUrl, clearDetectedUrl } = useMessageStore();
   const [url, setUrl] = useState<string>(defaultUrl);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  // Update URL if detectedUrl changes
+  useEffect(() => {
+    if (detectedUrl) {
+      setUrl(detectedUrl);
+      setIsLoading(true);
+
+      // Clear loading after a short delay to simulate loading
+      const timer = setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [detectedUrl]);
+
+  const handleClose = () => {
+    // Clear detected URL when closing preview
+    clearDetectedUrl();
+    onClose();
+  };
 
   const handleUrlSubmit = useCallback(async (event: React.FormEvent) => {
     event.preventDefault();
     setIsLoading(true);
-    // Add validation and URL processing here if needed
-    setIsLoading(false);
+
+    // Simulate loading
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
   }, []);
 
   return (
@@ -55,7 +81,7 @@ export function PreviewWindow({
           variant="ghost"
           size="icon"
           className="h-8 w-8 shrink-0"
-          onClick={onClose}
+          onClick={handleClose}
         >
           <X className="size-4" />
           <span className="sr-only">Close Preview</span>
@@ -69,7 +95,7 @@ export function PreviewWindow({
         className="relative flex-1"
       >
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/50">
+          <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         )}
@@ -78,6 +104,7 @@ export function PreviewWindow({
           className="h-full w-full border-0"
           sandbox="allow-scripts allow-same-origin allow-forms"
           title="Preview"
+          onLoad={() => setIsLoading(false)}
         />
       </motion.div>
     </motion.div>

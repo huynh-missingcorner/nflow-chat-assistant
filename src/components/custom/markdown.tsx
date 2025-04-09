@@ -1,8 +1,31 @@
 import { memo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { useUIStore } from "@/stores/useUIStore";
+import { useMessageStore } from "@/stores/useMessageStore";
+import { ExternalLink } from "lucide-react";
 
 const NonMemoizedMarkdown = ({ children }: { children: string }) => {
+  const { setPreviewOpen, setSidebarOpen } = useUIStore();
+  const { detectedUrl, clearDetectedUrl } = useMessageStore();
+
+  // Function to handle URL clicks
+  const handleUrlClick = (url: string) => (e: React.MouseEvent) => {
+    e.preventDefault();
+
+    // Set detected URL to the clicked URL
+    clearDetectedUrl(); // Clear previous URL first
+
+    // Open the URL in the preview window and hide sidebar
+    setPreviewOpen(true);
+    setSidebarOpen(false);
+
+    // Wait a bit to ensure state updates before setting the URL
+    setTimeout(() => {
+      useMessageStore.setState({ detectedUrl: url });
+    }, 100);
+  };
+
   const components = {
     code: ({ node, inline, className, children, ...props }: any) => {
       const match = /language-(\w+)/.exec(className || "");
@@ -50,15 +73,25 @@ const NonMemoizedMarkdown = ({ children }: { children: string }) => {
         </span>
       );
     },
-    a: ({ node, children, ...props }: any) => {
+    a: ({ node, href, children, ...props }: any) => {
+      const isUrl =
+        href && (href.startsWith("http://") || href.startsWith("https://"));
+      const isHighlighted = detectedUrl === href;
+
       return (
         <a
-          className="text-blue-500 hover:underline"
+          className={`inline-flex items-center gap-1 rounded px-1 py-0.5 ${
+            isHighlighted
+              ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300"
+              : "text-blue-500 hover:underline hover:bg-blue-50 dark:hover:bg-blue-900/30"
+          }`}
           target="_blank"
           rel="noreferrer"
+          onClick={isUrl ? handleUrlClick(href) : undefined}
           {...props}
         >
           {children}
+          {isUrl && <ExternalLink className="h-3 w-3" />}
         </a>
       );
     },
@@ -115,5 +148,5 @@ const NonMemoizedMarkdown = ({ children }: { children: string }) => {
 
 export const Markdown = memo(
   NonMemoizedMarkdown,
-  (prevProps, nextProps) => prevProps.children === nextProps.children,
+  (prevProps, nextProps) => prevProps.children === nextProps.children
 );

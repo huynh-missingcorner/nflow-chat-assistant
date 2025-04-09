@@ -10,7 +10,14 @@ import {
 } from "@/services/chatMessageService";
 import { toast } from "sonner";
 import { useSessionStore } from "./useSessionStore";
+import { useUIStore } from "./useUIStore";
 import { sendChatMessage } from "@/services/chatService";
+
+// Helper function to extract URLs from text
+const extractUrls = (text: string): string[] => {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  return text.match(urlRegex) || [];
+};
 
 interface MessageState {
   // State
@@ -18,6 +25,7 @@ interface MessageState {
   isLoading: boolean;
   isAiResponding: boolean;
   error: Error | null;
+  detectedUrl: string | null;
 
   // Actions
   fetchMessages: (sessionId?: string) => Promise<void>;
@@ -32,6 +40,7 @@ interface MessageState {
   clearSessionMessages: (sessionId: string) => Promise<void>;
   receiveSocketMessage: (message: Message) => void;
   appendChunk: (chunk: string) => void;
+  clearDetectedUrl: () => void;
 }
 
 export const useMessageStore = create<MessageState>()((set, get) => ({
@@ -40,6 +49,7 @@ export const useMessageStore = create<MessageState>()((set, get) => ({
   isLoading: false,
   isAiResponding: false,
   error: null,
+  detectedUrl: null,
 
   // Actions
   fetchMessages: async (sessionId?: string) => {
@@ -81,6 +91,21 @@ export const useMessageStore = create<MessageState>()((set, get) => ({
 
       // Create an assistant message with the response
       await get().sendUserMessage(activeSessionId, response.reply, "ASSISTANT");
+
+      // Check if the response contains URLs
+      const urls = extractUrls(response.reply);
+      if (urls.length > 0) {
+        // Update UI store to show preview and hide sidebar
+        const uiStore = useUIStore.getState();
+        uiStore.setPreviewOpen(true);
+        uiStore.setSidebarOpen(false);
+
+        // Set the first URL as the detected URL
+        set({ detectedUrl: urls[0] });
+
+        // Add a small toast notification
+        toast.info("URL detected and opened in preview");
+      }
     } catch (error) {
       toast.error("Failed to send message");
       console.error("Error sending message:", error);
@@ -190,6 +215,23 @@ export const useMessageStore = create<MessageState>()((set, get) => ({
     set((state) => ({
       messages: [...state.messages, message],
     }));
+
+    // If it's an assistant message, check for URLs
+    if (message.role === "assistant") {
+      const urls = extractUrls(message.content);
+      if (urls.length > 0) {
+        // Update UI store to show preview and hide sidebar
+        const uiStore = useUIStore.getState();
+        uiStore.setPreviewOpen(true);
+        uiStore.setSidebarOpen(false);
+
+        // Set the first URL as the detected URL
+        set({ detectedUrl: urls[0] });
+
+        // Add a small toast notification
+        toast.info("URL detected and opened in preview");
+      }
+    }
   },
 
   appendChunk: (chunk: string) => {
@@ -198,12 +240,38 @@ export const useMessageStore = create<MessageState>()((set, get) => ({
       const lastMessage = messages[messages.length - 1];
 
       if (lastMessage?.role === "assistant") {
+        const updatedContent = lastMessage.content + chunk;
         const updatedMessage = {
           ...lastMessage,
-          content: lastMessage.content + chunk,
+          content: updatedContent,
         };
+
+        // Check for URLs in the updated content
+        const updatedWithChunk = [...messages.slice(0, -1), updatedMessage];
+
+        // Only check for URLs if we haven't already detected one
+        if (!state.detectedUrl) {
+          const urls = extractUrls(updatedContent);
+          if (urls.length > 0) {
+            // Update UI store to show preview and hide sidebar
+            const uiStore = useUIStore.getState();
+            uiStore.setPreviewOpen(true);
+            uiStore.setSidebarOpen(false);
+
+            // Set URL and return updated state
+            setTimeout(() => {
+              toast.info("URL detected and opened in preview");
+            }, 100);
+
+            return {
+              messages: updatedWithChunk,
+              detectedUrl: urls[0],
+            };
+          }
+        }
+
         return {
-          messages: [...messages.slice(0, -1), updatedMessage],
+          messages: updatedWithChunk,
         };
       } else {
         const newMessage = {
@@ -217,5 +285,9 @@ export const useMessageStore = create<MessageState>()((set, get) => ({
         };
       }
     });
+  },
+
+  clearDetectedUrl: () => {
+    set({ detectedUrl: null });
   },
 }));

@@ -15,8 +15,9 @@ export function Chat() {
 
   // Get state and actions from stores
   const { fetchSessions } = useSessionStore();
-  const { fetchMessages } = useMessageStore();
-  const { isPreviewOpen, togglePreview } = useUIStore();
+  const { fetchMessages, detectedUrl } = useMessageStore();
+  const { isPreviewOpen, togglePreview, isSidebarOpen, setSidebarOpen } =
+    useUIStore();
   const activeSessionId = useSessionStore((state) => state.activeSessionId);
 
   // Fetch sessions on mount
@@ -31,8 +32,17 @@ export function Chat() {
     }
   }, [activeSessionId, fetchMessages]);
 
+  // Close sidebar when URL is detected (for mobile responsiveness)
+  useEffect(() => {
+    if (detectedUrl) {
+      setSidebarOpen(false);
+    }
+  }, [detectedUrl, setSidebarOpen]);
+
   return (
-    <SidebarProvider defaultOpen>
+    // Connect useUIStore's isSidebarOpen state to SidebarProvider's open prop
+    // This ensures that the Zustand store and the SidebarProvider component stay in sync
+    <SidebarProvider open={isSidebarOpen} onOpenChange={setSidebarOpen}>
       <div className="flex h-dvh w-full">
         <ChatSidebar />
         <div className="flex flex-1 overflow-hidden">
