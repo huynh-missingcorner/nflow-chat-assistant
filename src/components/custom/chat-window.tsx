@@ -5,7 +5,6 @@ import { Header } from "./header";
 import { useScrollToBottom } from "./use-scroll-to-bottom";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { useChatContext } from "@/contexts/ChatContext";
 import { Button } from "../ui/button";
 import { Trash, MoreHorizontal } from "lucide-react";
 import {
@@ -21,18 +20,21 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { useMessageStore } from "@/stores/useMessageStore";
+import { useSessionStore } from "@/stores/useSessionStore";
+import { useUIStore } from "@/stores/useUIStore";
 
 export function ChatWindow() {
+  // Get state and actions from stores
   const {
     messages,
-    isLoading,
+    isAiResponding,
     sendMessage,
-    isPreviewOpen,
-    togglePreview,
-    activeSessionId,
-    clearSessionMessages,
     deleteMessage,
-  } = useChatContext();
+    clearSessionMessages,
+  } = useMessageStore();
+  const { activeSessionId } = useSessionStore();
+  const { isPreviewOpen, togglePreview } = useUIStore();
 
   const [messagesContainerRef, messagesEndRef] =
     useScrollToBottom<HTMLDivElement>();
@@ -123,7 +125,7 @@ export function ChatWindow() {
             )}
           </div>
         ))}
-        {isLoading && <ThinkingMessage />}
+        {isAiResponding && <ThinkingMessage />}
         <div
           ref={messagesEndRef}
           className="shrink-0 min-w-[24px] min-h-[24px]"
@@ -134,7 +136,7 @@ export function ChatWindow() {
           question={question}
           setQuestion={setQuestion}
           onSubmit={handleSubmit}
-          isLoading={isLoading}
+          isLoading={isAiResponding}
           isNewChat={isNewChat}
         />
       </div>

@@ -15,7 +15,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { useChatContext } from "@/contexts/ChatContext";
+import { useSessionStore } from "@/stores/useSessionStore";
 
 interface ChatSessionItemProps {
   id: string;
@@ -32,14 +32,13 @@ export function ChatSessionItem({
   isActive,
   onClick,
 }: ChatSessionItemProps) {
-  const { updateSessionTitle, archiveSession, deleteSession } =
-    useChatContext();
+  const { updateSession, deleteSession } = useSessionStore();
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [newTitle, setNewTitle] = useState(title);
 
   async function handleRename() {
-    await updateSessionTitle(id, newTitle);
+    await updateSession(id, { title: newTitle });
     setIsRenameDialogOpen(false);
   }
 
@@ -49,7 +48,7 @@ export function ChatSessionItem({
   }
 
   async function handleArchive() {
-    await archiveSession(id);
+    await updateSession(id, { archived: true });
   }
 
   // When opening rename dialog, initialize with current title

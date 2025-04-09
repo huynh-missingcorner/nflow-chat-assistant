@@ -12,7 +12,7 @@ interface ChatInputProps {
   setQuestion: (question: string) => void;
   onSubmit: (text?: string) => void;
   isLoading: boolean;
-  isNewChat: boolean;
+  isNewChat?: boolean;
 }
 
 const suggestedActions = [
@@ -33,7 +33,7 @@ export const ChatInput = ({
   setQuestion,
   onSubmit,
   isLoading,
-  isNewChat,
+  isNewChat = false,
 }: ChatInputProps) => {
   const [showSuggestions, setShowSuggestions] = useState(true);
 

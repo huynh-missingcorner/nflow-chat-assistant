@@ -2,7 +2,7 @@ import { ThemeToggle } from "./theme-toggle";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Trash } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { useChatContext } from "@/contexts/ChatContext";
+import { useSessionStore } from "@/stores/useSessionStore";
 
 interface HeaderProps {
   onTogglePreview?: () => void;
@@ -17,7 +17,7 @@ export function Header({
   showClearMessages,
   onClearMessages,
 }: HeaderProps) {
-  const { activeSessionId, sessions } = useChatContext();
+  const { activeSessionId, sessions } = useSessionStore();
 
   // Find the active session to display its title
   const activeSession = sessions.find(
