@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { ExternalLink, Trash } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useSessionStore } from "@/stores/useSessionStore";
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface HeaderProps {
   onTogglePreview?: () => void;
@@ -18,12 +20,23 @@ export function Header({
   onClearMessages,
 }: HeaderProps) {
   const { activeSessionId, sessions } = useSessionStore();
+  const [titleChanged, setTitleChanged] = useState(false);
 
   // Find the active session to display its title
   const activeSession = sessions.find(
     (session) => session.id === activeSessionId
   );
   const sessionTitle = activeSession?.title || "Chat";
+
+  // Add effect to detect title changes for animation
+  useEffect(() => {
+    setTitleChanged(true);
+    const timeout = setTimeout(() => {
+      setTitleChanged(false);
+    }, 1500);
+
+    return () => clearTimeout(timeout);
+  }, [sessionTitle]);
 
   return (
     <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-border bg-background px-4">
@@ -33,9 +46,23 @@ export function Header({
           <ThemeToggle />
         </div>
 
-        <h1 className="text-lg font-semibold truncate max-w-[200px] md:max-w-md">
-          {sessionTitle}
-        </h1>
+        <AnimatePresence mode="wait">
+          <motion.h1
+            key={sessionTitle}
+            initial={{ opacity: 0.8 }}
+            animate={{
+              opacity: 1,
+              backgroundColor: titleChanged
+                ? "rgba(107, 107, 107, 0.2)"
+                : "transparent",
+            }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-lg font-semibold truncate max-w-[200px] md:max-w-md px-2 py-1 rounded-md"
+          >
+            {sessionTitle}
+          </motion.h1>
+        </AnimatePresence>
       </div>
       <div className="flex items-center gap-2">
         {showClearMessages && onClearMessages && (

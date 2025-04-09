@@ -2,6 +2,13 @@ import { create } from "zustand";
 import { io, Socket } from "socket.io-client";
 import { Message } from "@/interfaces/interfaces";
 
+// Add a new interface for the title update event
+interface WebSocketSessionTitleUpdatedDto {
+  sessionId: string;
+  title: string;
+  timestamp: string;
+}
+
 interface SocketState {
   // State
   socket: Socket | null;
@@ -20,6 +27,7 @@ interface SocketState {
     onMessageChunk: (data: { chunk: string }) => void,
     onMessageComplete: () => void,
     onSessionJoined: (data: { sessionId: string }) => void,
+    onSessionTitleUpdated: (data: WebSocketSessionTitleUpdatedDto) => void,
     onError: (error: Error) => void
   ) => void;
 }
@@ -99,6 +107,7 @@ export const useSocketStore = create<SocketState>()((set, get) => ({
     onMessageChunk,
     onMessageComplete,
     onSessionJoined,
+    onSessionTitleUpdated,
     onError
   ) => {
     const { socket } = get();
@@ -110,6 +119,7 @@ export const useSocketStore = create<SocketState>()((set, get) => ({
     socket.off("messageChunk");
     socket.off("messageComplete");
     socket.off("sessionJoined");
+    socket.off("sessionTitleUpdated");
     socket.off("error");
 
     // Set up new listeners
@@ -118,6 +128,7 @@ export const useSocketStore = create<SocketState>()((set, get) => ({
     socket.on("messageChunk", onMessageChunk);
     socket.on("messageComplete", onMessageComplete);
     socket.on("sessionJoined", onSessionJoined);
+    socket.on("sessionTitleUpdated", onSessionTitleUpdated);
     socket.on("error", onError);
   },
 }));

@@ -15,7 +15,7 @@ export function useSocket(url: string = "http://localhost:3000") {
   } = useSocketStore();
 
   const { receiveSocketMessage, appendChunk } = useMessageStore();
-  const { activeSessionId } = useSessionStore();
+  const { activeSessionId, updateSessionTitleFromSocket } = useSessionStore();
 
   // Connect to WebSocket on mount
   useEffect(() => {
@@ -38,6 +38,11 @@ export function useSocket(url: string = "http://localhost:3000") {
       },
       () => console.log("WebSocket: messageComplete"),
       (data) => console.log("WebSocket: sessionJoined", data),
+      (data) => {
+        // Handle session title updates
+        console.log("WebSocket: sessionTitleUpdated", data);
+        updateSessionTitleFromSocket(data.sessionId, data.title);
+      },
       (error) => console.error("Socket error:", error)
     );
 
@@ -51,6 +56,7 @@ export function useSocket(url: string = "http://localhost:3000") {
     setupListeners,
     receiveSocketMessage,
     appendChunk,
+    updateSessionTitleFromSocket,
     url,
   ]);
 
