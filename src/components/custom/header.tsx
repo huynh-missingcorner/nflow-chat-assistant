@@ -43,7 +43,6 @@ export function Header({
       <div className="flex items-center gap-2">
         <div className="flex items-center space-x-4">
           <SidebarTrigger />
-          <ThemeToggle />
         </div>
 
         <AnimatePresence mode="wait">
@@ -65,6 +64,7 @@ export function Header({
         </AnimatePresence>
       </div>
       <div className="flex items-center gap-2">
+        <ThemeToggle />
         {showClearMessages && onClearMessages && (
           <Button
             variant="ghost"

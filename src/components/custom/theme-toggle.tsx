@@ -8,7 +8,7 @@ export function ThemeToggle() {
   return (
     <Button
       variant="ghost"
-      className="bg-background text-gray-600 hover:white dark:text-gray-200 h-10"
+      className="bg-background text-gray-600 hover:white dark:text-gray-200 h-8 w-8"
       onClick={toggleTheme}
     >
       {isDarkMode ? (
