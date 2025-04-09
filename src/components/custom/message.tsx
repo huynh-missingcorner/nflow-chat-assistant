@@ -15,7 +15,7 @@ export const PreviewMessage = ({ message }: { message: Message }) => {
     >
       <div
         className={cx(
-          "group-data-[role=user]/message:bg-gray-100 dark:group-data-[role=user]/message:bg-muted group-data-[role=user]/message:text-black flex gap-4 group-data-[role=user]/message:px-3 w-full group-data-[role=user]/message:w-fit group-data-[role=user]/message:ml-auto group-data-[role=user]/message:max-w-2xl group-data-[role=user]/message:py-2 rounded-xl"
+          "group-data-[role=user]/message:bg-gray-100 dark:group-data-[role=user]/message:bg-muted group-data-[role=user]/message:text-black dark:group-data-[role=user]/message:text-white flex gap-4 group-data-[role=user]/message:px-3 w-full group-data-[role=user]/message:w-fit group-data-[role=user]/message:ml-auto group-data-[role=user]/message:max-w-2xl group-data-[role=user]/message:py-2 rounded-xl"
         )}
       >
         {message.role === "assistant" && (
