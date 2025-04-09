@@ -57,6 +57,12 @@ export const ThinkingMessage = () => {
         <div className="size-8 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border">
           <SparklesIcon size={14} />
         </div>
+
+        <div className="flex flex-col w-full">
+          <div className="flex flex-col gap-4 text-left">
+            <p className="text-sm text-muted-foreground">Processing...</p>
+          </div>
+        </div>
       </div>
     </motion.div>
   );
