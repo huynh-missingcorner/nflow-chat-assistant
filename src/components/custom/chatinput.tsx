@@ -4,7 +4,7 @@ import { Button } from "../ui/button";
 import { ArrowUpIcon } from "./icons";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Pause } from "lucide-react";
 
 interface ChatInputProps {
@@ -36,6 +36,20 @@ export const ChatInput = ({
   isNewChat = false,
 }: ChatInputProps) => {
   const [showSuggestions, setShowSuggestions] = useState(true);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const wasLoadingRef = useRef(isLoading);
+
+  // Watch for isLoading changes to detect when AI has finished responding
+  useEffect(() => {
+    // If AI was loading but now finished, focus the input
+    if (wasLoadingRef.current && !isLoading) {
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 100);
+    }
+    // Update the ref for the next check
+    wasLoadingRef.current = isLoading;
+  }, [isLoading]);
 
   return (
     <div className="relative w-full flex flex-col gap-4">
@@ -55,6 +69,7 @@ export const ChatInput = ({
                 onClick={() => {
                   const text = suggestedAction.action;
                   onSubmit(text);
+                  setQuestion(""); // Clear the input after submission
                   setShowSuggestions(false);
                 }}
                 className="text-left border rounded-xl px-4 py-3.5 text-sm flex-1 gap-1 sm:flex-col w-full h-auto justify-start items-start"
@@ -76,6 +91,7 @@ export const ChatInput = ({
       />
 
       <Textarea
+        ref={textareaRef}
         placeholder="Send a message..."
         className={cx(
           "min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-xl text-base bg-muted"
@@ -91,7 +107,8 @@ export const ChatInput = ({
               toast.error("Please wait for the model to finish its response!");
             } else {
               setShowSuggestions(false);
-              onSubmit();
+              onSubmit(question);
+              setQuestion(""); // Clear the input after submission
             }
           }
         }}
@@ -101,8 +118,11 @@ export const ChatInput = ({
 
       <Button
         className="rounded-full p-1.5 h-fit absolute bottom-2 right-2 m-0.5 border dark:border-zinc-600"
-        onClick={() => onSubmit(question)}
-        disabled={question.length === 0}
+        onClick={() => {
+          onSubmit(question);
+          setQuestion(""); // Clear the input after submission
+        }}
+        disabled={question.length === 0 || isLoading}
       >
         {isLoading ? <Pause size={14} /> : <ArrowUpIcon size={14} />}
       </Button>
