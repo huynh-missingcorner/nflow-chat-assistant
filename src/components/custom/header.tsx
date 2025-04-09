@@ -2,6 +2,7 @@ import { ThemeToggle } from "./theme-toggle";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Trash } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useChatContext } from "@/contexts/ChatContext";
 
 interface HeaderProps {
   onTogglePreview?: () => void;
@@ -16,6 +17,14 @@ export function Header({
   showClearMessages,
   onClearMessages,
 }: HeaderProps) {
+  const { activeSessionId, sessions } = useChatContext();
+
+  // Find the active session to display its title
+  const activeSession = sessions.find(
+    (session) => session.id === activeSessionId
+  );
+  const sessionTitle = activeSession?.title || "Chat";
+
   return (
     <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-border bg-background px-4">
       <div className="flex items-center gap-2">
@@ -23,7 +32,10 @@ export function Header({
           <SidebarTrigger />
           <ThemeToggle />
         </div>
-        <h1 className="font-semibold">Chat</h1>
+
+        <h1 className="text-lg font-semibold truncate max-w-[200px] md:max-w-md">
+          {sessionTitle}
+        </h1>
       </div>
       <div className="flex items-center gap-2">
         {showClearMessages && onClearMessages && (
