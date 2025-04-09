@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { PlusCircle, MessageCircle, X, Trash2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { PlusCircle, MessageCircle, X, Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -11,7 +11,9 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, onClose, onDeleteChat }: SidebarProps) {
-  const [chats, setChats] = useState<{ id: string; name: string; active: boolean }[]>([]);
+  const [chats, setChats] = useState<
+    { id: string; name: string; active: boolean }[]
+  >([]);
   const [activeChat, setActiveChat] = useState<string | null>(null);
 
   const createNewChat = () => {
@@ -25,17 +27,19 @@ export function Sidebar({ isOpen, onClose, onDeleteChat }: SidebarProps) {
 
   const selectChat = (chatId: string) => {
     setActiveChat(chatId);
-    setChats(chats.map(chat => ({
-      ...chat,
-      active: chat.id === chatId,
-    })));
+    setChats(
+      chats.map((chat) => ({
+        ...chat,
+        active: chat.id === chatId,
+      }))
+    );
   };
 
   const handleDeleteChat = (e: React.MouseEvent, chatId: string) => {
     e.stopPropagation();
     if (onDeleteChat) {
       onDeleteChat(chatId);
-      setChats(chats.filter(chat => chat.id !== chatId));
+      setChats(chats.filter((chat) => chat.id !== chatId));
       if (activeChat === chatId) {
         setActiveChat(null);
       }
@@ -69,10 +73,7 @@ export function Sidebar({ isOpen, onClose, onDeleteChat }: SidebarProps) {
         <ScrollArea className="flex-1">
           <div className="space-y-2">
             {chats.map((chat) => (
-              <div
-                key={chat.id}
-                className="group relative"
-              >
+              <div key={chat.id} className="group relative">
                 <Button
                   variant={chat.active ? "secondary" : "ghost"}
                   className="w-full justify-start gap-2 pr-8"

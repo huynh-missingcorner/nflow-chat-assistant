@@ -8,7 +8,7 @@ import { useChatContext } from "@/contexts/ChatContext";
 
 export function Chat() {
   return (
-    <ChatProvider wsUrl="http://localhost:3000">
+    <ChatProvider>
       <SidebarProvider defaultOpen>
         <div className="flex h-dvh w-full">
           <ChatSidebar />

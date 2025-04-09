@@ -5,7 +5,6 @@ import {
   useState,
   useEffect,
 } from "react";
-import { useWebSocket } from "@/hooks/useWebSocket";
 import { Message } from "@/interfaces/interfaces";
 import { useChatSessions } from "@/hooks/useChatSessions";
 import { useChatMessages } from "@/hooks/useChatMessages";
@@ -54,10 +53,9 @@ const mockUser = {
 
 interface ChatProviderProps {
   children: ReactNode;
-  wsUrl: string;
 }
 
-export function ChatProvider({ children, wsUrl }: ChatProviderProps) {
+export function ChatProvider({ children }: ChatProviderProps) {
   const [activeSessionId, setActiveSessionId] = useState<string>("");
   const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
   const [user] = useState<User>(mockUser);

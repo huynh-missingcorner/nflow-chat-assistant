@@ -52,7 +52,7 @@ export function useChatSessions(): UseChatSessionsReturn {
     setError(null);
     try {
       const newSession = await createChatSession({ title });
-      setSessions((prev) => [...prev, newSession]);
+      setSessions((prev) => [newSession, ...prev]);
       return newSession;
     } catch (err) {
       setError(
