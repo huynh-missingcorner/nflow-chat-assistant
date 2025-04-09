@@ -43,6 +43,8 @@ export function ChatWindow() {
   );
   const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
 
+  const isNewChat = messages.length === 0;
+
   const handleSubmit = async (text?: string) => {
     const messageText = text || question;
     if (!messageText.trim()) return;
@@ -95,7 +97,7 @@ export function ChatWindow() {
         className="flex flex-col min-w-0 gap-6 flex-1 overflow-y-scroll pt-4"
         ref={messagesContainerRef}
       >
-        {messages.length === 0 && <Overview />}
+        {isNewChat && <Overview />}
         {messages.map((message, index) => (
           <div key={message.id || index} className="group relative">
             <PreviewMessage message={message} />
@@ -133,6 +135,7 @@ export function ChatWindow() {
           setQuestion={setQuestion}
           onSubmit={handleSubmit}
           isLoading={isLoading}
+          isNewChat={isNewChat}
         />
       </div>
 

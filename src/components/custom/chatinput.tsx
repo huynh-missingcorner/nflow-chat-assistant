@@ -12,6 +12,7 @@ interface ChatInputProps {
   setQuestion: (question: string) => void;
   onSubmit: (text?: string) => void;
   isLoading: boolean;
+  isNewChat: boolean;
 }
 
 const suggestedActions = [
@@ -32,12 +33,13 @@ export const ChatInput = ({
   setQuestion,
   onSubmit,
   isLoading,
+  isNewChat,
 }: ChatInputProps) => {
   const [showSuggestions, setShowSuggestions] = useState(true);
 
   return (
     <div className="relative w-full flex flex-col gap-4">
-      {showSuggestions && (
+      {showSuggestions && isNewChat && (
         <div className="hidden md:grid sm:grid-cols-2 gap-2 w-full">
           {suggestedActions.map((suggestedAction, index) => (
             <motion.div
