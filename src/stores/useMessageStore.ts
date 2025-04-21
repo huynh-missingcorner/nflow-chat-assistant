@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { Message } from "@/interfaces/interfaces";
 import {
-  createChatMessage,
   getChatMessages,
   deleteChatMessage,
   updateChatMessage,
@@ -11,7 +10,7 @@ import {
 import { toast } from "sonner";
 import { useSessionStore } from "./useSessionStore";
 import { useUIStore } from "./useUIStore";
-import { sendChatMessage } from "@/services/chatService";
+import { v4 as uuidv4 } from "uuid";
 
 // Helper function to extract URLs from text
 const extractUrls = (text: string): string[] => {
@@ -26,10 +25,10 @@ interface MessageState {
   isAiResponding: boolean;
   error: Error | null;
   detectedUrl: string | null;
+  streamingMessageId: string | null;
 
   // Actions
   fetchMessages: (sessionId?: string) => Promise<void>;
-  sendMessage: (text: string) => Promise<void>;
   sendUserMessage: (
     sessionId: string,
     content: string,
@@ -39,17 +38,20 @@ interface MessageState {
   deleteMessage: (id: string) => Promise<void>;
   clearSessionMessages: (sessionId: string) => Promise<void>;
   receiveSocketMessage: (message: Message) => void;
+  startSocketResponse: () => void;
+  finishSocketResponse: () => void;
   appendChunk: (chunk: string) => void;
   clearDetectedUrl: () => void;
 }
 
-export const useMessageStore = create<MessageState>()((set, get) => ({
+export const useMessageStore = create<MessageState>()((set) => ({
   // Initial state
   messages: [],
   isLoading: false,
   isAiResponding: false,
   error: null,
   detectedUrl: null,
+  streamingMessageId: null,
 
   // Actions
   fetchMessages: async (sessionId?: string) => {
@@ -72,76 +74,24 @@ export const useMessageStore = create<MessageState>()((set, get) => ({
     }
   },
 
-  sendMessage: async (text: string) => {
-    const activeSessionId = useSessionStore.getState().activeSessionId;
-    if (!activeSessionId || !text.trim()) return;
-
-    try {
-      // First, send the user message to the backend
-      await get().sendUserMessage(activeSessionId, text);
-
-      // Then, request a response from the AI
-      set({ isAiResponding: true });
-
-      // Call the chat API to get AI response
-      const response = await sendChatMessage({
-        sessionId: activeSessionId,
-        message: text,
-      });
-
-      // Create an assistant message with the response
-      await get().sendUserMessage(activeSessionId, response.reply, "ASSISTANT");
-
-      // Check if the response contains URLs
-      const urls = extractUrls(response.reply);
-      if (urls.length > 0) {
-        // Update UI store to show preview and hide sidebar
-        const uiStore = useUIStore.getState();
-        uiStore.setPreviewOpen(true);
-        uiStore.setSidebarOpen(false);
-
-        // Set the first URL as the detected URL
-        set({ detectedUrl: urls[0] });
-
-        // Add a small toast notification
-        toast.info("URL detected and opened in preview");
-      }
-    } catch (error) {
-      toast.error("Failed to send message");
-      console.error("Error sending message:", error);
-    } finally {
-      set({ isAiResponding: false });
-    }
-  },
-
   sendUserMessage: async (
     sessionId: string,
     content: string,
     role: "USER" | "ASSISTANT" | "SYSTEM" = "USER"
   ) => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await createChatMessage({
-        sessionId,
-        content,
-        role,
-      });
+    // Create an optimistic message with a temporary ID
+    const tempMessage = {
+      id: uuidv4(),
+      content,
+      role: role.toLowerCase(),
+    };
 
-      const newMessage = mapToAppMessage(response);
+    // Update the UI immediately
+    set((state) => ({
+      messages: [...state.messages, tempMessage],
+    }));
 
-      set((state) => ({
-        messages: [...state.messages, newMessage],
-      }));
-
-      return newMessage;
-    } catch (err) {
-      const error =
-        err instanceof Error ? err : new Error("Failed to send message");
-      set({ error });
-      throw error;
-    } finally {
-      set({ isLoading: false });
-    }
+    return tempMessage;
   },
 
   updateMessage: async (id: string, content: string) => {
@@ -214,7 +164,10 @@ export const useMessageStore = create<MessageState>()((set, get) => ({
   receiveSocketMessage: (message: Message) => {
     set((state) => ({
       messages: [...state.messages, message],
+      isAiResponding: false,
     }));
+
+    message.role = message.role.toLowerCase();
 
     // If it's an assistant message, check for URLs
     if (message.role === "assistant") {
@@ -234,56 +187,54 @@ export const useMessageStore = create<MessageState>()((set, get) => ({
     }
   },
 
+  startSocketResponse: () => {
+    set({ isAiResponding: true });
+  },
+
+  finishSocketResponse: () => {
+    set({
+      isAiResponding: false,
+      streamingMessageId: null,
+    });
+  },
+
   appendChunk: (chunk: string) => {
     set((state) => {
       const messages = [...state.messages];
-      const lastMessage = messages[messages.length - 1];
+      const lastIndex = messages.length - 1;
 
-      if (lastMessage?.role === "assistant") {
+      // Only append if we have messages and the last one is from the assistant
+      if (lastIndex >= 0 && messages[lastIndex].role === "assistant") {
+        const lastMessage = messages[lastIndex];
         const updatedContent = lastMessage.content + chunk;
         const updatedMessage = {
           ...lastMessage,
           content: updatedContent,
         };
 
-        // Check for URLs in the updated content
-        const updatedWithChunk = [...messages.slice(0, -1), updatedMessage];
+        // Check for URLs in the new chunk
+        const urls = extractUrls(updatedContent);
+        if (urls.length > 0 && !state.detectedUrl) {
+          // Update UI store to show preview and hide sidebar
+          const uiStore = useUIStore.getState();
+          uiStore.setPreviewOpen(true);
+          uiStore.setSidebarOpen(false);
 
-        // Only check for URLs if we haven't already detected one
-        if (!state.detectedUrl) {
-          const urls = extractUrls(updatedContent);
-          if (urls.length > 0) {
-            // Update UI store to show preview and hide sidebar
-            const uiStore = useUIStore.getState();
-            uiStore.setPreviewOpen(true);
-            uiStore.setSidebarOpen(false);
+          // Set the first URL as the detected URL
+          state.detectedUrl = urls[0];
 
-            // Set URL and return updated state
-            setTimeout(() => {
-              toast.info("URL detected and opened in preview");
-            }, 100);
-
-            return {
-              messages: updatedWithChunk,
-              detectedUrl: urls[0],
-            };
-          }
+          // Add a small toast notification
+          toast.info("URL detected and opened in preview");
         }
 
+        // Return updated state
         return {
-          messages: updatedWithChunk,
-        };
-      } else {
-        const newMessage = {
-          id: crypto.randomUUID(),
-          content: chunk,
-          role: "assistant",
-        } as Message;
-
-        return {
-          messages: [...messages, newMessage],
+          ...state,
+          messages: [...messages.slice(0, lastIndex), updatedMessage],
         };
       }
+
+      return state;
     });
   },
 

@@ -23,19 +23,21 @@ import {
 import { useMessageStore } from "@/stores/useMessageStore";
 import { useSessionStore } from "@/stores/useSessionStore";
 import { useUIStore } from "@/stores/useUIStore";
+import { useSocketStore } from "@/stores/useSocketStore";
+import { v4 as uuidv4 } from "uuid";
 
 export function ChatWindow() {
   // Get state and actions from stores
   const {
     messages,
     isAiResponding,
-    sendMessage,
     deleteMessage,
     clearSessionMessages,
     detectedUrl,
   } = useMessageStore();
   const { activeSessionId } = useSessionStore();
   const { isPreviewOpen, togglePreview, setPreviewOpen } = useUIStore();
+  const { sendMessage: sendSocketMessage } = useSocketStore();
 
   const [messagesContainerRef, messagesEndRef] =
     useScrollToBottom<HTMLDivElement>();
@@ -57,10 +59,35 @@ export function ChatWindow() {
 
   const handleSubmit = async (text?: string) => {
     const messageText = text || question;
-    if (!messageText.trim()) return;
+    if (!messageText.trim() || !activeSessionId) return;
 
-    await sendMessage(messageText);
-    setQuestion("");
+    try {
+      // Create a temporary message ID for the optimistic update
+      const tempMessageId = uuidv4();
+
+      // Optimistically add the user message to the UI store
+      const message = {
+        id: tempMessageId,
+        content: messageText,
+        role: "user",
+      };
+
+      // Update the local store for immediate feedback
+      useMessageStore.getState().receiveSocketMessage(message);
+
+      // Update loading state to show thinking message
+      useMessageStore.getState().startSocketResponse();
+
+      // Send the message via WebSocket only
+      sendSocketMessage(messageText, activeSessionId);
+
+      // Reset the question input
+      setQuestion("");
+    } catch (error) {
+      console.error("Error sending message:", error);
+      // Reset loading state if there's an error
+      useMessageStore.getState().finishSocketResponse();
+    }
   };
 
   const handleMessageDelete = async (id: string) => {

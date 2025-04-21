@@ -20,9 +20,9 @@ interface UserState {
 
 // Mock user data - Replace with real data from your auth system
 const mockUser = {
-  name: "Huy Nguyen",
-  email: "huynguyen123@gmail.com",
-  avatarUrl: "https://avatars.githubusercontent.com/u/47636745?v=4", // Add avatar URL if available
+  name: "Username",
+  email: "username@gmail.com",
+  avatarUrl: "", // Add avatar URL if available
 };
 
 export const useUserStore = create<UserState>()(

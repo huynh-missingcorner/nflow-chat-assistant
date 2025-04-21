@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { useSocketStore } from "@/stores/useSocketStore";
 import { useMessageStore } from "@/stores/useMessageStore";
 import { useSessionStore } from "@/stores/useSessionStore";
-import { v4 as uuidv4 } from "uuid";
 
 export function useSocket(url: string = "http://localhost:3000") {
   // Get necessary actions and state from our stores
@@ -14,7 +13,13 @@ export function useSocket(url: string = "http://localhost:3000") {
     leaveSession: leaveSocketSession,
   } = useSocketStore();
 
-  const { receiveSocketMessage, appendChunk } = useMessageStore();
+  const {
+    appendChunk,
+    startSocketResponse,
+    finishSocketResponse,
+    receiveSocketMessage,
+  } = useMessageStore();
+
   const { activeSessionId, updateSessionTitleFromSocket } = useSessionStore();
 
   // Connect to WebSocket on mount
@@ -23,27 +28,40 @@ export function useSocket(url: string = "http://localhost:3000") {
 
     // Set up Socket listeners
     setupListeners(
-      (data) => console.log("WebSocket: messageReceived", data),
       (data) => {
-        // Handle complete message response
-        receiveSocketMessage({
-          id: uuidv4(),
-          content: data.message,
-          role: "assistant",
-        });
+        console.log("WebSocket: messageReceived", data);
+        // We don't need to call startSocketResponse here since it's already called in the UI
       },
       (data) => {
-        // Handle streaming response chunks
-        appendChunk(data.chunk);
+        console.log("WebSocket: messageResponse received", data);
+        if (data.content) {
+          // For non-streaming responses, append the entire message at once
+          receiveSocketMessage(data);
+          // Then mark the response as complete
+          finishSocketResponse();
+        }
       },
-      () => console.log("WebSocket: messageComplete"),
+      (data) => {
+        if (data.chunk) {
+          // Append each chunk to the current assistant message
+          appendChunk(data.chunk);
+        }
+      },
+      () => {
+        console.log("WebSocket: messageComplete");
+        // Mark the streaming response as complete
+        finishSocketResponse();
+      },
       (data) => console.log("WebSocket: sessionJoined", data),
       (data) => {
-        // Handle session title updates
         console.log("WebSocket: sessionTitleUpdated", data);
         updateSessionTitleFromSocket(data.sessionId, data.title);
       },
-      (error) => console.error("Socket error:", error)
+      (error) => {
+        console.error("Socket error:", error);
+        // Make sure to reset the UI state if there's an error
+        finishSocketResponse();
+      }
     );
 
     // Cleanup on unmount
@@ -54,9 +72,11 @@ export function useSocket(url: string = "http://localhost:3000") {
     connect,
     disconnect,
     setupListeners,
-    receiveSocketMessage,
+    startSocketResponse,
+    finishSocketResponse,
     appendChunk,
     updateSessionTitleFromSocket,
+    receiveSocketMessage,
     url,
   ]);
 

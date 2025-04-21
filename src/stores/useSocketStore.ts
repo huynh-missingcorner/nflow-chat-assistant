@@ -20,10 +20,10 @@ interface SocketState {
   disconnect: () => void;
   joinSession: (sessionId: string) => void;
   leaveSession: (sessionId: string) => void;
-  sendMessage: (message: string, messageId: string, sessionId: string) => void;
+  sendMessage: (message: string, sessionId: string) => void;
   setupListeners: (
     onMessageReceived: (data: Message) => void,
-    onMessageResponse: (data: { message: string }) => void,
+    onMessageResponse: (data: Message) => void,
     onMessageChunk: (data: { chunk: string }) => void,
     onMessageComplete: () => void,
     onSessionJoined: (data: { sessionId: string }) => void,
@@ -90,13 +90,12 @@ export const useSocketStore = create<SocketState>()((set, get) => ({
     set({ currentSessionId: "" });
   },
 
-  sendMessage: (message: string, messageId: string, sessionId: string) => {
+  sendMessage: (message: string, sessionId: string) => {
     const { socket, isConnected } = get();
     if (!socket || !isConnected) return;
 
     socket.emit("sendMessage", {
       message,
-      messageId,
       sessionId,
     });
   },
