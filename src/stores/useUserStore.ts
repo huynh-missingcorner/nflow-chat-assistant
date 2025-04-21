@@ -20,8 +20,8 @@ interface UserState {
 
 // Mock user data - Replace with real data from your auth system
 const mockUser = {
-  name: "Username",
-  email: "username@gmail.com",
+  name: "Admin",
+  email: "admin@gmail.com",
   avatarUrl: "", // Add avatar URL if available
 };
 
